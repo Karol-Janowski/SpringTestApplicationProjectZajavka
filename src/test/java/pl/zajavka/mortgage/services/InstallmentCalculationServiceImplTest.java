@@ -9,8 +9,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pl.zajavka.mortgage.fixtures.TestDataFixtures;
 import pl.zajavka.mortgage.model.InputData;
 import pl.zajavka.mortgage.model.Installment;
+import pl.zajavka.mortgage.model.InstallmentAmounts;
+import pl.zajavka.mortgage.model.Overpayment;
 
 import java.math.BigDecimal;
+import java.util.stream.IntStream;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -40,18 +43,42 @@ class InstallmentCalculationServiceImplTest {
     void thatInstallmentAreCalculatedCorrectly() {
         //given
         final var inputData = TestDataFixtures.someInputData();
+        final var expected = IntStream.rangeClosed(1, 180).boxed().map(this::createInstallment).toList();
 
-        when(whenoverpaymentCalculationService.calculate(any(BigDecimal.class), any(InputData.class))).thenReturn();
-        when(whoverpaymentCalculationService.calculate(any(BigDecimal.class), any(Installment.class))).thenReturn();
-        when(wheoverpaymentCalculationService.calculate()).thenReturn();
-        when(whenoverpaymentCalculationService.calculate()).thenReturn();
-        when(overpaymentCalculationService.calculate()).thenReturn();
+        when(timePointCalculationService.calculate(any(BigDecimal.class), any(InputData.class)))
+                .thenReturn(TestDataFixtures.someTimePoint());
+        when(timePointCalculationService.calculate(any(BigDecimal.class), any(Installment.class)))
+                .thenReturn(TestDataFixtures.someTimePoint());
+
+        when(amountsCalculationService.calculate(any(InputData.class), any(Overpayment.class)))
+                .thenReturn(TestDataFixtures.someInstallmentAmounts());
+        when(amountsCalculationService.calculate(any(InputData.class), any(Overpayment.class), any(Installment.class)))
+                .thenReturn(TestDataFixtures.someInstallmentAmounts());
+
+        when(residualCalculationService.calculate(any(InstallmentAmounts.class), any(InputData.class)))
+                .thenReturn(TestDataFixtures.someMortgageResidual());
+        when(residualCalculationService.calculate(any(InstallmentAmounts.class), any(InputData.class), any(Installment.class)))
+                .thenReturn(TestDataFixtures.someMortgageResidual());
+
+        when(referenceCalculationService.calculate(any(InstallmentAmounts.class), any(InputData.class)))
+                .thenReturn(TestDataFixtures.someMortgageReference());
+        when(referenceCalculationService.calculate(any(InstallmentAmounts.class), any(InputData.class), any(Installment.class)))
+                .thenReturn(TestDataFixtures.someMortgageReference());
+
+        when(overpaymentCalculationService.calculate(any(BigDecimal.class), any(InputData.class)))
+                .thenReturn(TestDataFixtures.someOverpayment());
+
 
         //when
         final var result = installmentCalculationService.calculate(inputData);
 
         //then
-        Assertions.assertEquals(null, result);
+        Assertions.assertEquals(expected, result);
+    }
+
+    private Installment createInstallment(final Integer index) {
+        return TestDataFixtures.someInstallment()
+                .withInstallmentNumber(BigDecimal.valueOf(index));
     }
 
 
